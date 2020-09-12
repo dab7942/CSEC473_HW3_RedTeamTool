@@ -1,0 +1,79 @@
+# This program is meant to periodically change the keyboard layout of the computer it is run on every 5 minutes
+# This is a tool for Red Teamers and anyone else looking to cause some mayhem on a computer that multiple
+# people can access.
+# You are advised against running this on a computer you need to be doing work on.
+
+# Guide to codes for the different keyboards
+#0410:00000410 = it-IT (Italian)
+#0419:00000419 = ru-RU (Russian)
+#0408:00000408 = el-GR (Greek)
+#040c:0000040c = fr-FR (French/AZERTY)
+#0409:00010409 = en-US (Dvorak)
+#0409:00000409 = en-US (QWERTY)
+
+$5 = 0
+# This variable ensures that the layout changes to something different each time the starting layout is qwerty
+
+while ($true){
+# Keep looping as long as the program is running
+	$1 = Get-WinUserLanguageList
+	$2 = $1[-1].InputMethodTips[0]
+# Get a fresh version of the Language List every time
+	if ($2 -match "0409:00000409") {
+# If current layout is QWERTY, use the $5 variable to choose which layout to change to
+# Change to the appropriate one, then update the $5 variable acccordingly
+# This randomness is to ensure inconsistency of what layout the blue team has to deal with whenever they
+# notice it is different and change it back to qwerty
+		if ($5 -match 0) {
+			$1[-1].InputMethodTips[0]="0409:00010409"
+			Set-WinUserLanguageList -LanguageList $1 -Force
+# Note that "-Force" is used here to suppress the confirmation prompt
+			$5 = 1
+		} elseif ($5 -match 1) {
+			$1[-1].InputMethodTips[0]="040c:0000040c"
+			Set-WinUserLanguageList -LanguageList $1 -Force
+			$5 = 2
+		} elseif ($5 -match 2) {
+			$1[-1].InputMethodTips[0]="0408:00000408"
+			Set-WinUserLanguageList -LanguageList $1 -Force
+			$5 = 3
+		} elseif ($5 -match 3) {
+			$1[-1].InputMethodTips[0]="0419:00000419"
+			Set-WinUserLanguageList -LanguageList $1 -Force
+			$5 = 4
+		} else {
+			$1[-1].InputMethodTips[0]="0410:00000410"
+			Set-WinUserLanguageList -LanguageList $1 -Force
+			$5 = 0
+		}
+# If the current layout is not qwerty, it is changed through the other layouts in a loop
+	} elseif ($2 -match "0409:00010409") {
+# If the current layout is dvorak, change to azerty
+		$1[-1].InputMethodTips[0]="040c:0000040c"
+		Set-WinUserLanguageList -LanguageList $1 -Force
+	} elseif ($2 -match "040c:0000040c") {
+# If the current layout is azerty, change to Greek
+		$1[-1].InputMethodTips[0]="0408:00000408"
+		Set-WinUserLanguageList -LanguageList $1 -Force
+	} elseif ($2 -match "0408:00000408") {
+# If the current layout is Greek, change to Russian
+		$1[-1].InputMethodTips[0]="0419:00000419"
+		Set-WinUserLanguageList -LanguageList $1 -Force
+	} elseif ($2 -match "0419:00000419") {
+# If the current layout is Russian, change to Italian
+		$1[-1].InputMethodTips[0]="0410:00000410"
+		Set-WinUserLanguageList -LanguageList $1 -Force
+	} elseif ($2 -match "0410:00000410") {
+# If the current layout is Italian, change to dvorak
+		$1[-1].InputMethodTips[0]="0409:00010409"
+		Set-WinUserLanguageList -LanguageList $1 -Force
+	} else {
+# If the current layout is not one of the expected 6, change to qwerty
+# This is just in case a different layout is in use by default, or if blue team tries to change it to something
+# else to stop this program
+		$1[-1].InputMethodTips[0]="0409:00000409"
+		Set-WinUserLanguageList -LanguageList $1 -Force
+	}
+	Start-Sleep -s 300
+# After changing, wait 5 minutes before changing again.
+}
