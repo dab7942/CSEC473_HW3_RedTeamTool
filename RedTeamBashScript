@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Set variables to store the different possible layouts
+u=$(echo us)
+d=$(echo dvorak)
+f=$(echo fr)
+i=$(echo it)
+
+# Set a variable to randomize which layout gets used
+a=0
+
+# Loop the changing for continued chaos
+while true; do
+# Query for the current layout
+	x=$(setxkbmap -query | grep layout | cut -b 13-)
+# If layout is us, cycle through changing to qvorak, azerty, and italian
+	if [ "$x" == "$u" ]; then
+		if [ "$a" == 0 ]; then
+			setxkbmap dvorak
+			a=1
+		elif [ "$a" == 1 ]; then
+			setxkbmap fr
+			a=2
+		else
+			setxkbmap it
+			a=0
+		fi
+# If the layout is dvorak, change to french
+	elif [ "$x" == "$d" ]; then
+		setxkbmap fr
+# If the layout is french, change to italian
+	elif [ "$x" == "$f" ]; then
+		setxkbmap it
+# If the layout is italian, change to dvorak
+	elif [ "$x" == "$i" ]; then
+		setxkbmap dvorak
+# If the layout is not one of the previous four, change to qwerty
+	else
+		setxkbmap us
+	fi
+# Wait for 5 minutes before changing again
+	sleep 300
+done
